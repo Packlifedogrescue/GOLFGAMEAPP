@@ -1,0 +1,681 @@
+<title>ZappyGolf</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Righteous&family=Rubik:wght@400;500;700;800;900&display=swap">
+<style>
+  :root{
+    --navy:#0a1730; --navy2:#081226; --panel:#122a4d;
+    --cyan:#38d9ff; --yellow:#ffd447; --green:#5fd35f;
+    --orange:#ff8f5e; --text:#eaf3ff; --muted:#8fb2d6; --line:rgba(56,217,255,.18);
+    --good:#5fd35f; --bad:#ff7a7a; color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:radial-gradient(120% 80% at 50% -10%,#123 0%,var(--navy) 45%,var(--navy2) 100%);
+    color:var(--text);font-family:'Rubik',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    display:flex;align-items:center;justify-content:center;overscroll-behavior:none;
+    -webkit-user-select:none;user-select:none;touch-action:none;}
+  .app{position:relative;width:100%;max-width:480px;height:100vh;height:100dvh;display:flex;flex-direction:column;
+    overflow:hidden;background:linear-gradient(180deg,#0b1c38,#0a1730);box-shadow:0 0 0 1px var(--line),0 30px 80px rgba(0,0,0,.5)}
+  @media(min-width:520px){.app{border-radius:22px;height:min(880px,96vh)}}
+  .hud{display:flex;align-items:center;gap:10px;padding:10px 12px;background:linear-gradient(180deg,#0e2244,#0b1c38);
+    border-bottom:1px solid var(--line);z-index:5}
+  .hud .name{font-family:'Righteous';font-size:16px;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hud .sub{font-size:11px;color:var(--muted);margin-top:2px}
+  .hud .grow{flex:1;min-width:0}
+  .hud .score{text-align:right}
+  .hud .score b{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums}
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;background:rgba(56,217,255,.12);
+    border:1px solid var(--line);font-weight:800;font-size:13px;color:var(--yellow);cursor:pointer;white-space:nowrap}
+  .iconbtn{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:rgba(56,217,255,.1);
+    color:var(--text);font-size:16px;cursor:pointer;display:grid;place-items:center}
+  .iconbtn:active{transform:scale(.94)}
+  .stage{position:relative;flex:1;min-height:0}
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  .hint{padding:8px 14px;font-size:11.5px;color:var(--muted);text-align:center;background:#0b1c38;border-top:1px solid var(--line);min-height:34px}
+  .panel{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;padding:18px;overflow:auto}
+  .panel.center{align-items:center;justify-content:center;text-align:center}
+  #scTitle{background:linear-gradient(180deg,rgba(8,18,38,.86),rgba(8,18,38,.94))}
+  .scrim{position:absolute;inset:0;z-index:10;background:rgba(6,16,34,.78);backdrop-filter:blur(3px);
+    display:flex;align-items:center;justify-content:center;padding:20px}
+  .hidden{display:none!important}
+  .card{width:100%;max-width:400px;background:linear-gradient(180deg,#13284a,#0f2140);border:1px solid var(--line);
+    border-radius:20px;padding:22px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+  .logo{font-family:'Righteous';line-height:.92;text-align:center;margin:4px 0 2px}
+  .logo .l1{font-size:15vw;display:block}
+  @media(min-width:520px){.logo .l1{font-size:74px}}
+  .logo .zap{color:var(--yellow);text-shadow:0 0 8px rgba(255,212,71,.55),0 0 22px rgba(56,217,255,.5)}
+  .logo .golf{color:var(--green);text-shadow:0 0 8px rgba(95,211,95,.5),0 0 22px rgba(56,217,255,.5)}
+  .logo .bolt{color:var(--cyan);text-shadow:0 0 10px var(--cyan)}
+  .tag{color:var(--muted);font-size:14px;margin:8px 0 6px}
+  .course{color:var(--green);font-weight:800;font-size:13px;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px}
+  .best{color:var(--yellow);font-weight:800;font-size:15px;margin-bottom:16px}
+  .btn{appearance:none;border:0;cursor:pointer;font-family:'Rubik';font-weight:800;border-radius:999px;padding:14px 26px;
+    font-size:16px;width:100%;max-width:300px;margin:6px auto;display:block;color:#04121f;
+    background:linear-gradient(180deg,#6be3ff,#35c8f0);box-shadow:0 8px 20px rgba(56,217,255,.35)}
+  .btn:active{transform:translateY(1px)}
+  .btn.alt{background:linear-gradient(180deg,#7ff08a,#41c96a);box-shadow:0 8px 20px rgba(95,211,95,.3)}
+  .btn.ghost{background:transparent;color:var(--cyan);border:1.5px solid var(--line);box-shadow:none}
+  .btn.sm{padding:10px 16px;font-size:13px}
+  .term{font-family:'Righteous';font-size:30px;margin:2px 0 6px}
+  .term.win{color:var(--green)}
+  .big{font-size:22px;font-weight:800}
+  .coins{color:var(--yellow);font-weight:900;font-size:20px;margin-top:6px}
+  .muted{color:var(--muted);font-size:13px;margin:4px 0 14px}
+  .record{color:var(--yellow);font-weight:900;margin-bottom:6px}
+  .phead{display:flex;align-items:center;gap:10px;margin-bottom:6px;position:sticky;top:-18px;padding-top:2px;
+    background:linear-gradient(180deg,#0a1730 70%,rgba(10,23,48,0));z-index:2}
+  .phead h2{font-family:'Righteous';font-size:22px;margin:0;flex:1}
+  .sec{font-family:'Righteous';letter-spacing:1px;color:var(--cyan);font-size:14px;text-transform:uppercase;margin:16px 2px 8px}
+  .secsub{color:var(--muted);font-size:12px;margin:-4px 2px 10px}
+  .item{background:linear-gradient(180deg,#13284a,#102142);border:1px solid var(--line);border-radius:16px;padding:13px;margin-bottom:11px}
+  .item.eq{border-color:var(--yellow);box-shadow:0 0 0 1px var(--yellow) inset}
+  .item .top{display:flex;align-items:center;gap:13px}
+  .ball{width:48px;height:48px;border-radius:50%;position:relative;flex:none;box-shadow:inset -6px -8px 12px rgba(0,0,0,.25)}
+  .ball .shine{position:absolute;left:9px;top:7px;width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.7)}
+  .clubico{width:48px;height:48px;border-radius:14px;flex:none;display:grid;place-items:center;font-size:24px;background:rgba(56,217,255,.1);border:1px solid var(--line)}
+  .item .info{flex:1;min-width:0}
+  .item .nm{font-weight:800;font-size:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .item .bl{color:var(--muted);font-size:12.5px;margin-top:3px}
+  .tagm{font-size:10.5px;font-weight:800;color:#bfe9ff;background:rgba(56,217,255,.15);padding:2px 7px;border-radius:6px}
+  .lv{font-size:11px;font-weight:800;color:var(--yellow);background:rgba(255,212,71,.14);padding:2px 8px;border-radius:8px}
+  .stats{margin:11px 0 4px;display:grid;gap:5px}
+  .stat{display:flex;align-items:center;gap:8px}
+  .stat span{width:60px;font-size:11px;color:var(--muted);font-weight:600}
+  .track{flex:1;height:7px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}
+  .fill{height:7px;border-radius:4px;background:var(--green)}
+  .pips{display:flex;gap:4px;margin:11px 0 4px}
+  .pip{flex:1;height:8px;border-radius:4px;background:rgba(255,255,255,.1)}
+  .pip.on{background:var(--green)}
+  .act{display:flex;align-items:center;gap:10px;margin-top:11px}
+  .act .eff{flex:1;font-size:11.5px;color:var(--muted);font-weight:600}
+  .abtn{border:0;cursor:pointer;font-weight:800;border-radius:22px;padding:11px 18px;font-size:14px;min-width:96px;color:#04121f}
+  .abtn.buy{background:linear-gradient(180deg,#ffd874,#e6a800)}
+  .abtn.equip{background:linear-gradient(180deg,#6be3ff,#35c8f0)}
+  .abtn.eqd{background:transparent;color:var(--green);border:1.5px solid var(--green)}
+  .abtn.max{background:transparent;color:var(--cyan);border:1.5px solid var(--line)}
+  .abtn:active{transform:translateY(1px)}
+  .coingrid{display:flex;gap:10px}
+  .coinpack{flex:1;background:linear-gradient(180deg,#13284a,#102142);border:1px solid var(--line);border-radius:14px;padding:16px 8px;text-align:center;cursor:pointer}
+  .coinpack b{display:block;font-size:15px}
+  .coinpack .pr{margin-top:8px;display:inline-block;background:linear-gradient(180deg,#6be3ff,#35c8f0);color:#04121f;font-weight:800;border-radius:12px;padding:4px 12px;font-size:13px}
+  .demo{color:var(--muted);font-size:11px;text-align:center;margin-top:16px;line-height:1.5}
+  .row{display:flex;align-items:center;padding:6px 2px;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
+  .row.h{border-bottom:2px solid var(--cyan);color:var(--cyan);font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  .row.t{border-bottom:0;border-top:2px solid var(--cyan);font-weight:900;margin-top:4px}
+  .row .c1{flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .cn{width:44px;text-align:center;font-variant-numeric:tabular-nums}
+  .row.me{background:rgba(56,217,255,.1);border-radius:8px}
+  .rk{width:30px;text-align:center;font-weight:800}
+  .tabs{display:flex;gap:8px;margin:6px 0 12px}
+  .tab{flex:1;text-align:center;padding:9px;border-radius:12px;background:rgba(255,255,255,.06);color:var(--muted);font-weight:800;font-size:13px;cursor:pointer;border:1px solid transparent}
+  .tab.on{background:rgba(56,217,255,.14);color:var(--text);border-color:var(--line)}
+  .streak{font-family:'Righteous';font-size:40px;color:var(--yellow);text-align:center;text-shadow:0 0 16px rgba(255,212,71,.4)}
+  .streaklbl{text-align:center;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1px}
+  .todaybox{background:rgba(56,217,255,.08);border:1px solid var(--line);border-radius:14px;padding:14px;margin:14px 0;text-align:center}
+  .nameinput{width:100%;max-width:260px;margin:14px auto;display:block;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#0b1c38;color:var(--text);font-size:16px;font-family:'Rubik';text-align:center}
+  .wlabel{color:var(--cyan);font-weight:800;font-size:13px;margin:14px 0 8px;text-transform:uppercase;letter-spacing:1px}
+  .wrow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .wchip{padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid transparent;font-size:18px;font-weight:800;cursor:pointer;color:var(--text);line-height:1}
+  .wchip[data-w="auto"]{font-size:13px}
+  .wchip.on{background:rgba(56,217,255,.16);border-color:var(--line)}
+  .wnote{color:var(--muted);font-size:11px;margin-top:10px}
+  .toast{position:absolute;left:50%;bottom:52px;transform:translateX(-50%);z-index:30;background:#0e2244;border:1px solid var(--line);color:var(--text);padding:10px 16px;border-radius:12px;font-weight:700;font-size:13px;box-shadow:0 10px 30px rgba(0,0,0,.4);opacity:0;transition:opacity .25s,transform .25s}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="app" id="app">
+  <div class="hud">
+    <div class="grow"><div class="name" id="hHole">ZappyGolf</div><div class="sub" id="hSub">Ready</div></div>
+    <div class="score"><b id="hStrokes">0</b><div class="sub" id="hPar">strokes</div></div>
+    <div class="pill" id="hCoins" title="Open shop">🪙 0</div>
+    <div class="iconbtn" id="hWeather" title="Weather">☀️</div>
+    <div class="iconbtn" id="hSound">🔊</div>
+  </div>
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
+
+    <div class="panel center" id="scTitle">
+      <div class="logo"><span class="l1"><span class="zap">Zappy</span><span class="bolt">⚡</span><span class="golf">Golf</span></span></div>
+      <div class="tag">Real 18-hole golf · drag back to aim, release to swing</div>
+      <div class="course">⛳ Thunder Valley · Par 72</div>
+      <div class="best" id="titleBest"></div>
+      <button class="btn" id="bStart">▶ Play Round</button>
+      <button class="btn alt sm" id="bDaily">📅 Daily Challenge</button>
+      <button class="btn ghost sm" id="bShop2">🏪 Pro Shop</button>
+      <button class="btn ghost sm" id="bBoard2">🏆 Leaderboard</button>
+      <div class="wlabel" id="wLabel">Weather: Sunny</div>
+      <div class="wrow" id="wRow">
+        <div class="wchip" data-w="auto">⛅ Auto</div><div class="wchip" data-w="sun">☀️</div>
+        <div class="wchip" data-w="cloud">☁️</div><div class="wchip" data-w="rain">🌧️</div>
+        <div class="wchip" data-w="snow">❄️</div><div class="wchip" data-w="fog">🌫️</div>
+      </div>
+      <div class="wnote">Auto uses your real local weather in the installed app.</div>
+    </div>
+
+    <div class="scrim hidden" id="scHole"><div class="card">
+      <div class="term" id="hcTerm">Par</div><div class="big" id="hcStrokes">4 strokes</div>
+      <div class="coins" id="hcCoins">+20 🪙</div><div class="muted" id="hcSub"></div>
+      <button class="btn" id="bNext">Next Hole →</button><button class="btn ghost sm" id="bShopMid">🏪 Shop</button>
+    </div></div>
+
+    <div class="scrim hidden" id="scRound"><div class="card">
+      <div class="record hidden" id="rcRecord">🎉 NEW COURSE RECORD! 🎉</div>
+      <div class="term win">Round Complete!</div><div class="coins" id="rcCoins">+250 🪙</div>
+      <div id="rcCard" style="margin:14px 0"></div>
+      <button class="btn" id="bAgain">Play Again</button><button class="btn ghost sm" id="bBoardEnd">🏆 Leaderboard</button>
+    </div></div>
+
+    <div class="scrim hidden" id="scDaily"><div class="card">
+      <div class="term win" id="dcTerm">Daily Done!</div><div class="big" id="dcStrokes">4 strokes</div>
+      <div class="coins" id="dcCoins">+55 🪙</div><div class="muted" id="dcSub"></div>
+      <div class="streak" id="dcStreak">🔥 1</div><div class="streaklbl">day streak</div>
+      <button class="btn" style="margin-top:16px" id="bDailyDone">Back to Menu</button>
+      <button class="btn ghost sm" id="bBoardDaily">🏆 Leaderboard</button>
+    </div></div>
+
+    <div class="panel hidden" id="scShop">
+      <div class="phead"><h2>🏪 Pro Shop</h2><div class="pill" id="shopCoins">🪙 0</div><div class="iconbtn" id="bShopX">✕</div></div>
+      <div class="sec">Balls</div><div class="secsub">Equip one — each plays differently.</div><div id="ballList"></div>
+      <div class="sec">Clubs · permanent upgrades</div><div class="secsub">Stack on any ball and boost every shot.</div><div id="clubList"></div>
+      <div class="sec">Coins</div><div class="secsub">Earn by playing — or top up to upgrade faster.</div>
+      <div class="coingrid" id="coinPacks"></div>
+      <div class="demo">Demo mode: premium purchases are simulated and never charge real money. Connect App Store / Google Play billing before release.</div>
+    </div>
+
+    <div class="panel hidden" id="scBoard">
+      <div class="phead"><h2>🏆 Leaderboard</h2><div class="iconbtn" id="bNameEdit" title="Edit name">✎</div><div class="iconbtn" id="bBoardX">✕</div></div>
+      <div class="tabs"><div class="tab on" id="tabRound">Full Round</div><div class="tab" id="tabDaily">Daily</div></div>
+      <div id="boardBody"></div>
+    </div>
+
+    <div class="scrim hidden" id="scName"><div class="card">
+      <div class="term">Your Name</div><div class="muted">Shown on the leaderboard.</div>
+      <input class="nameinput" id="nameInput" maxlength="14" placeholder="Player">
+      <button class="btn" id="bNameSave">Save</button>
+    </div></div>
+
+    <div class="toast" id="toast"></div>
+  </div>
+  <div class="hint" id="hint">Drag back from the ball to aim &amp; set power, then release.</div>
+</div>
+
+<script>
+/* ===================== COURSE: THUNDER VALLEY (par 72) =====================
+   Holes are authored in normalized world coords: x across the hole (0..1),
+   d = fraction of the hole length from tee (0) to green (1). The engine scales
+   these into a tall scrolling world (≈90 yards wide) sized by the yardage. */
+function H(num,name,par,yards,fw,cl,green,opt){opt=opt||{};
+  return{num,name:num+" · "+name,par,yards,fw:fw,cl,green,
+    bunkers:opt.b||[],water:opt.w||[],trees:opt.t||[]};}
+const LEVELS=[
+  H(1,"Dogwood",4,410,15,[{x:.34,d:0},{x:.34,d:.42},{x:.55,d:.78},{x:.64,d:1}],{x:.64,d:1,r:13},
+    {b:[{x:.5,d:.52,r:7},{x:.56,d:.94,r:6}],t:[{x:.2,d:.5,r:8},{x:.78,d:.7,r:7}]}),
+  H(2,"Long Meadow",5,545,15,[{x:.55,d:0},{x:.5,d:.5},{x:.44,d:1}],{x:.44,d:1,r:14},
+    {b:[{x:.38,d:.94,r:6},{x:.6,d:.5,r:7}],w:[{x:.66,d:.55,w:.16,h:.1}]}),
+  H(3,"The Chapel",4,385,15,[{x:.5,d:0},{x:.5,d:1}],{x:.5,d:1,r:13},
+    {b:[{x:.38,d:.9,r:6},{x:.62,d:.9,r:6}],t:[{x:.24,d:.55,r:7},{x:.76,d:.4,r:7}]}),
+  H(4,"Blue Lake",3,175,12,[{x:.5,d:0},{x:.5,d:1}],{x:.5,d:1,r:12},
+    {w:[{x:.5,d:.45,w:.5,h:.28}],b:[{x:.63,d:.92,r:6}]}),
+  H(5,"Ridgeback",4,430,15,[{x:.5,d:0},{x:.5,d:1}],{x:.5,d:1,r:13},
+    {b:[{x:.36,d:.5,r:7},{x:.5,d:.92,r:6}],t:[{x:.72,d:.62,r:8}]}),
+  H(6,"Left Bend",4,400,15,[{x:.62,d:0},{x:.62,d:.45},{x:.4,d:.8},{x:.32,d:1}],{x:.32,d:1,r:13},
+    {b:[{x:.5,d:.55,r:7},{x:.26,d:.92,r:6}],t:[{x:.8,d:.5,r:8}]}),
+  H(7,"Postage Stamp",3,155,11,[{x:.5,d:0},{x:.5,d:1}],{x:.5,d:1,r:11},
+    {b:[{x:.4,d:.9,r:5},{x:.6,d:.9,r:5},{x:.5,d:.78,r:5}]}),
+  H(8,"The Gauntlet",5,560,15,[{x:.5,d:0},{x:.5,d:1}],{x:.5,d:1,r:14},
+    {b:[{x:.36,d:.4,r:6},{x:.62,d:.62,r:6},{x:.4,d:.92,r:6}],w:[{x:.5,d:.8,w:.24,h:.06}]}),
+  H(9,"Homeward",4,415,15,[{x:.4,d:0},{x:.5,d:.5},{x:.6,d:1}],{x:.6,d:1,r:13},
+    {b:[{x:.5,d:.9,r:6}],t:[{x:.26,d:.6,r:8},{x:.74,d:.45,r:7}]}),
+  H(10,"Fir Alley",4,395,14,[{x:.5,d:0},{x:.5,d:1}],{x:.5,d:1,r:13},
+    {t:[{x:.3,d:.35,r:8},{x:.7,d:.35,r:8},{x:.3,d:.7,r:8},{x:.7,d:.7,r:8}],b:[{x:.5,d:.92,r:6}]}),
+  H(11,"Cape",4,440,15,[{x:.62,d:0},{x:.5,d:.5},{x:.42,d:1}],{x:.42,d:1,r:13},
+    {w:[{x:.3,d:.55,w:.34,h:.5}],b:[{x:.5,d:.92,r:6}]}),
+  H(12,"Short Iron",3,190,12,[{x:.5,d:0},{x:.5,d:1}],{x:.5,d:1,r:12},
+    {b:[{x:.38,d:.88,r:6},{x:.62,d:.88,r:6}],t:[{x:.75,d:.5,r:7}]}),
+  H(13,"Amen",5,520,15,[{x:.48,d:0},{x:.52,d:.5},{x:.46,d:1}],{x:.46,d:1,r:14},
+    {w:[{x:.58,d:.82,w:.3,h:.08}],b:[{x:.38,d:.55,r:7}]}),
+  H(14,"Windmill",4,405,15,[{x:.5,d:0},{x:.5,d:1}],{x:.5,d:1,r:13},
+    {b:[{x:.34,d:.45,r:7},{x:.66,d:.72,r:7},{x:.5,d:.93,r:6}]}),
+  H(15,"Right Turn",4,375,15,[{x:.36,d:0},{x:.36,d:.45},{x:.58,d:.8},{x:.66,d:1}],{x:.66,d:1,r:13},
+    {b:[{x:.5,d:.55,r:7}],t:[{x:.2,d:.55,r:8}]}),
+  H(16,"Island",3,165,12,[{x:.5,d:0},{x:.5,d:1}],{x:.5,d:1,r:12},
+    {w:[{x:.5,d:.86,w:.66,h:.3}]}),
+  H(17,"The Road",4,450,14,[{x:.44,d:0},{x:.5,d:.5},{x:.56,d:1}],{x:.56,d:1,r:12},
+    {b:[{x:.64,d:.9,r:6}],t:[{x:.28,d:.55,r:8},{x:.72,d:.35,r:7}]}),
+  H(18,"Thunder Finish",5,575,15,[{x:.5,d:0},{x:.46,d:.5},{x:.5,d:1}],{x:.5,d:1,r:15},
+    {w:[{x:.2,d:.55,w:.2,h:.28},{x:.8,d:.55,w:.2,h:.28}],b:[{x:.4,d:.9,r:6},{x:.6,d:.9,r:6}]}),
+];
+const TOTAL_PAR=LEVELS.reduce((a,l)=>a+l.par,0);
+
+const BALLS=[
+  {id:"classic",name:"Classic",blurb:"Balanced in every way.",power:1,roll:1,bounce:1,magnet:1,waterproof:false,body:"#ffffff",accent:"#d7dbe0",unlock:{t:"default"}},
+  {id:"sunball",name:"Sunball",blurb:"Extra pop and long roll.",power:1.18,roll:1.18,bounce:1,magnet:1,waterproof:false,body:"#ffd447",accent:"#e6b800",unlock:{t:"coins",amt:150}},
+  {id:"rico",name:"Rico",blurb:"Super bouncy off trees & cart paths.",power:1.05,roll:1.08,bounce:1.35,magnet:1,waterproof:false,body:"#ff8f3f",accent:"#e06a1c",unlock:{t:"coins",amt:200}},
+  {id:"brick",name:"Brick",blurb:"Dead-stop control, checks up fast.",power:.98,roll:.72,bounce:.55,magnet:1.15,waterproof:false,body:"#c08457",accent:"#7a5433",unlock:{t:"coins",amt:250}},
+  {id:"homer",name:"Homer",blurb:"Strong cup magnetism on the green.",power:1,roll:1,bounce:.9,magnet:2.1,waterproof:false,body:"#4da3ff",accent:"#2f7ed1",unlock:{t:"coins",amt:350}},
+  {id:"aqua",name:"Aqua",blurb:"Skips across water — no penalty.",power:1.1,roll:1.12,bounce:1,magnet:1.1,waterproof:true,body:"#37e0d0",accent:"#12b3a3",unlock:{t:"iap",price:"$1.99"}},
+  {id:"titan",name:"Titan",blurb:"Huge distance off the tee.",power:1.4,roll:1.32,bounce:1.1,magnet:1.5,waterproof:false,body:"#3a3f47",accent:"#c9a13b",unlock:{t:"iap",price:"$2.99"}},
+  {id:"nova",name:"Neon Nova",blurb:"Distance, magnetism AND waterproof.",power:1.25,roll:1.22,bounce:1.05,magnet:1.9,waterproof:true,body:"#b26bff",accent:"#8a3ff0",unlock:{t:"iap",price:"$3.99"}},
+];
+const CLUBS=[
+  {id:"driver",name:"Driver",emoji:"🏌️",blurb:"More clubhead speed — longer drives.",stat:"Power",per:.05,max:5,costs:[200,350,550,800,1200]},
+  {id:"irons",name:"Irons",emoji:"⛳",blurb:"The cup catches faster-rolling putts.",stat:"Cup catch",per:.12,max:5,costs:[170,310,500,760,1120]},
+  {id:"wedge",name:"Sand Wedge",emoji:"🏖️",blurb:"Less drag out of the bunkers.",stat:"Sand relief",per:.2,max:5,costs:[180,320,520,780,1150]},
+  {id:"putter",name:"Putter",emoji:"🎯",blurb:"Stronger pull toward the cup.",stat:"Cup pull",per:.15,max:5,costs:[150,300,500,750,1100]},
+  {id:"range",name:"Rangefinder",emoji:"🔭",blurb:"A longer predictive aim line.",stat:"Aim length",per:.25,max:4,costs:[120,260,460,720]},
+];
+const COIN_PACKS=[{id:"c1",coins:600,price:"$0.99"},{id:"c2",coins:2200,price:"$2.99"},{id:"c3",coins:9000,price:"$9.99"}];
+
+/* ===================== STATE ===================== */
+const LS="zg.web.v2";
+const def={coins:0,owned:["classic"],equipped:"classic",clubs:{},best:null,
+  daily:{streak:0,last:null,best:{}},board:{round:[],daily:[]},name:"Player",muted:false,weather:"auto"};
+let S=load();
+function load(){try{const r=localStorage.getItem(LS);if(!r)return structuredClone(def);
+  return Object.assign(structuredClone(def),JSON.parse(r));}catch(e){return structuredClone(def);}}
+function save(){try{localStorage.setItem(LS,JSON.stringify(S));}catch(e){}}
+function getBall(id){return BALLS.find(b=>b.id===id)||BALLS[0];}
+function clubLv(id){return Math.max(0,S.clubs[id]||0);}
+function upgrades(){return{power:1+clubLv("driver")*.05,magnet:1+clubLv("putter")*.15,
+  capture:1+clubLv("irons")*.12,sand:Math.min(1,clubLv("wedge")*.2),aim:1+clubLv("range")*.25};}
+const NOUP={power:1,magnet:1,capture:1,sand:0,aim:1};
+
+/* ===================== AUDIO ===================== */
+let AC=null;
+function ac(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}return AC;}
+function tone(f,d,type,g0,f2){if(S.muted)return;const c=ac();if(!c)return;const o=c.createOscillator(),g=c.createGain();
+  o.type=type||"sine";o.frequency.setValueAtTime(f,c.currentTime);
+  if(f2)o.frequency.exponentialRampToValueAtTime(f2,c.currentTime+d);
+  g.gain.setValueAtTime(g0||.2,c.currentTime);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+d);
+  o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+d);}
+function noise(d,g0){if(S.muted)return;const c=ac();if(!c)return;const n=c.createBuffer(1,c.sampleRate*d,c.sampleRate),dt=n.getChannelData(0);
+  for(let i=0;i<dt.length;i++)dt[i]=(Math.random()*2-1)*Math.pow(1-i/dt.length,2);
+  const s=c.createBufferSource();s.buffer=n;const g=c.createGain();g.gain.value=g0||.3;s.connect(g);g.connect(c.destination);s.start();}
+const SFX={putt:p=>tone(250,.18,"sine",.25,120+p*140),bounce:()=>tone(520,.07,"triangle",.1),
+  splash:()=>noise(.3,.25),sink:()=>{tone(660,.18,"sine",.22);setTimeout(()=>tone(988,.28,"sine",.22),90);},
+  cheer:()=>[523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,.3,"triangle",.2),i*110)),coin:()=>tone(880,.09,"square",.12,1320)};
+function vibe(ms){if(!S.muted&&navigator.vibrate)try{navigator.vibrate(ms);}catch(e){}}
+
+/* ===================== WEATHER ===================== */
+const WEATHER={
+  sun:{label:"Sunny",icon:"☀️",tint:null,rough:"#2f7d45",fair:"#46bd6b",fringe:"#5cc879",grn:"#79d98c",sand:"#e6d6a0",water:"#2f86c8",tree:"#1e5e37",tee:"#3a9e5c"},
+  cloud:{label:"Cloudy",icon:"☁️",tint:"rgba(120,132,146,.16)",rough:"#357a49",fair:"#49a866",fringe:"#57b273",grn:"#74c585",sand:"#ddce99",water:"#3d80ad",tree:"#245a38",tee:"#3c9257"},
+  rain:{label:"Rainy",icon:"🌧️",tint:"rgba(30,52,84,.28)",rough:"#286b3e",fair:"#3d9c5c",fringe:"#49a668",grn:"#63bd78",sand:"#cdbd88",water:"#2f6f9e",tree:"#1c5030",tee:"#337d4c"},
+  snow:{label:"Snowy",icon:"❄️",tint:"rgba(210,225,235,.14)",snow:true,rough:"#d7e3ea",fair:"#e9f2f6",fringe:"#eef5f8",grn:"#f3f9fc",sand:"#eef1f5",water:"#bfe0ee",tree:"#8fa39a",tee:"#dfeaf0"},
+  fog:{label:"Foggy",icon:"🌫️",tint:"rgba(224,229,232,.2)",rough:"#4a8064",fair:"#5aa07a",fringe:"#64a884",grn:"#82c096",sand:"#cdc7a8",water:"#6f93a6",tree:"#3f6350",tee:"#54916d"},
+};
+function resolveWeather(){if(S.weather!=="auto")return S.weather;const m=new Date().getMonth();
+  if(m===11||m===0||m===1)return"snow";if(m===2||m===10)return"cloud";if(m===3||m===9)return"rain";if(m===4||m===8)return"fog";return"sun";}
+let wKind="sun",wfx={rain:[],snow:[],clouds:[],fog:[]};
+function initWFX(){wKind=resolveWeather();const W=field.w,H=field.h;wfx={rain:[],snow:[],clouds:[],fog:[]};
+  if(wKind==="rain")for(let i=0;i<90;i++)wfx.rain.push({x:Math.random()*W,y:Math.random()*H,len:8+Math.random()*10,sp:400+Math.random()*250});
+  if(wKind==="snow")for(let i=0;i<70;i++)wfx.snow.push({x:Math.random()*W,y:Math.random()*H,r:1.4+Math.random()*2.6,sp:24+Math.random()*40,sw:Math.random()*6.28});
+  if(wKind==="cloud"||wKind==="sun")for(let i=0;i<(wKind==="cloud"?5:2);i++)wfx.clouds.push({x:Math.random()*W,y:20+Math.random()*H*.4,s:.7+Math.random()*.9,sp:6+Math.random()*10});
+  if(wKind==="fog")for(let i=0;i<5;i++)wfx.fog.push({x:Math.random()*W,y:Math.random()*H,s:.9+Math.random()*1.1,sp:8+Math.random()*14,a:.05+Math.random()*.07});}
+function updateWFX(dt){const W=field.w,H=field.h;
+  for(const d of wfx.rain){d.y+=d.sp*dt;d.x+=d.sp*.2*dt;if(d.y>H){d.y=-d.len;d.x=Math.random()*W;}}
+  for(const f of wfx.snow){f.sw+=dt*2;f.y+=f.sp*dt;f.x+=Math.sin(f.sw)*12*dt;if(f.y>H){f.y=-4;f.x=Math.random()*W;}}
+  for(const c of wfx.clouds){c.x+=c.sp*dt;if(c.x>W+120)c.x=-120;}
+  for(const b of wfx.fog){b.x+=b.sp*dt;if(b.x>W+140)b.x=-140;}}
+function cloud(x,y,r){ctx.beginPath();ctx.arc(x,y,r*.6,0,7);ctx.arc(x+r*.6,y+r*.1,r*.5,0,7);ctx.arc(x-r*.6,y+r*.12,r*.45,0,7);ctx.arc(x+r*.1,y-r*.25,r*.5,0,7);ctx.fill();}
+function drawWeather(W,H){const w=WEATHER[wKind];
+  if(wKind==="sun"){const g=ctx.createRadialGradient(W*.82,-H*.05,10,W*.82,-H*.05,W*.9);
+    g.addColorStop(0,"rgba(255,244,180,.5)");g.addColorStop(.3,"rgba(255,240,170,.14)");g.addColorStop(1,"rgba(255,240,170,0)");
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
+  if(w.tint){ctx.fillStyle=w.tint;ctx.fillRect(0,0,W,H);}
+  for(const c of wfx.clouds){ctx.fillStyle=wKind==="cloud"?"rgba(225,230,236,.4)":"rgba(255,255,255,.22)";cloud(c.x,c.y,44*c.s);}
+  if(wKind==="rain"){ctx.strokeStyle="rgba(200,225,255,.5)";ctx.lineWidth=1.5;ctx.beginPath();
+    for(const d of wfx.rain){ctx.moveTo(d.x,d.y);ctx.lineTo(d.x-d.len*.25,d.y+d.len);}ctx.stroke();}
+  if(wKind==="snow"){ctx.fillStyle="rgba(255,255,255,.9)";for(const f of wfx.snow){ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,7);ctx.fill();}}
+  if(wKind==="fog"){for(const b of wfx.fog){ctx.fillStyle="rgba(232,236,239,"+b.a+")";cloud(b.x,b.y,80*b.s);}}}
+function setWeatherUI(){document.getElementById("hWeather").textContent=WEATHER[resolveWeather()].icon;
+  document.getElementById("wLabel").textContent="Weather: "+(S.weather==="auto"?WEATHER[resolveWeather()].label+" (Auto)":WEATHER[S.weather].label);
+  document.querySelectorAll(".wchip").forEach(c=>c.classList.toggle("on",c.dataset.w===S.weather));}
+
+/* ===================== PHYSICS (terrain-based) ===================== */
+const F_FAIR=.9855,F_ROUGH=.974,F_GREEN=.968,F_SAND=.9,WALL=.72,STOP=.02,CAPF=.5,MAG=1.8,MAXF=2.7,YWIDE=90;
+const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+const spd=b=>Math.hypot(b.vel.x,b.vel.y);
+const dst=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+function distSeg(p,a,b){const dx=b.x-a.x,dy=b.y-a.y,l2=dx*dx+dy*dy;if(l2===0)return dst(p,a);
+  let t=((p.x-a.x)*dx+(p.y-a.y)*dy)/l2;t=cl(t,0,1);return Math.hypot(p.x-(a.x+t*dx),p.y-(a.y+t*dy));}
+function distPoly(p,pts){let m=1e9;for(let i=0;i<pts.length-1;i++)m=Math.min(m,distSeg(p,pts[i],pts[i+1]));return m;}
+function inRect(p,r){return p.x>=r.x&&p.x<=r.x+r.w&&p.y>=r.y&&p.y<=r.y+r.h;}
+function buildGeom(hole,fld,spec,up){
+  const W=fld.w,ppy=W/YWIDE,worldH=Math.max(fld.h*1.05,hole.yards*ppy);
+  const X=x=>x*W, Y=d=>worldH*(1-d);
+  const path=hole.cl.map(p=>({x:X(p.x),y:Y(p.d)}));
+  const green={x:X(hole.green.x),y:Y(hole.green.d),r:hole.green.r*ppy};
+  const bunkers=hole.bunkers.map(b=>({x:X(b.x),y:Y(b.d),r:b.r*ppy}));
+  const water=hole.water.map(w=>({x:X(w.x-w.w/2),y:Y(w.d+w.h/2),w:w.w*W,h:w.h*worldH}));
+  const trees=hole.trees.map(t=>({x:X(t.x),y:Y(t.d),r:t.r*ppy}));
+  return {fld,W,worldH,ppy,path,green,pin:{x:green.x,y:green.y},bunkers,water,trees,
+    ballR:1.35*ppy,cupR:1.7*ppy,fairHalf:hole.fw*ppy,rollF:spec.roll,
+    rest:cl(WALL*spec.bounce,.25,.95),magnet:spec.magnet*up.magnet,capture:CAPF*W*up.capture,
+    waterproof:spec.waterproof,sand:up.sand,tee:{...path[0]}};
+}
+function spawn(g){return{pos:{...g.tee},vel:{x:0,y:0},rest:{...g.tee},moving:false,sunk:false};}
+function terrainAt(p,g){
+  if(p.x<0||p.x>g.W||p.y<0||p.y>g.worldH)return{k:"ob"};
+  for(const w of g.water)if(inRect(p,w))return{k:"water"};
+  if(dst(p,g.green)<g.green.r)return{k:"green",f:F_GREEN};
+  for(const b of g.bunkers)if(dst(p,b)<b.r)return{k:"sand",f:F_SAND+(F_FAIR-F_SAND)*g.sand};
+  if(distPoly(p,g.path)<g.fairHalf)return{k:"fair",f:F_FAIR};
+  return{k:"rough",f:F_ROUGH};
+}
+function tree(b,t,rad,rest){const d=dst(b.pos,t),R=t.r+rad;if(d>=R)return false;
+  const nx=(b.pos.x-t.x)/(d||1),ny=(b.pos.y-t.y)/(d||1),push=R-d;
+  b.pos.x+=nx*push;b.pos.y+=ny*push;const vn=b.vel.x*nx+b.vel.y*ny;
+  if(vn<0){b.vel.x-=(1+rest*.6)*vn*nx;b.vel.y-=(1+rest*.6)*vn*ny;}return true;}
+function step(b,dt,g){const ev={sank:false,water:false,bounced:false};if(!b.moving||b.sunk)return ev;
+  const sp=spd(b),mt=g.ballR*.75,sub=Math.max(1,Math.ceil(sp*dt/mt)),h=dt/sub;
+  for(let i=0;i<sub;i++){
+    const dh=dst(b.pos,g.pin);
+    if(dh<g.cupR*8*g.magnet&&dh<g.green.r){const pull=5*g.W*g.magnet,nx=(g.pin.x-b.pos.x)/(dh||1),ny=(g.pin.y-b.pos.y)/(dh||1);
+      b.vel.x+=nx*pull*h;b.vel.y+=ny*pull*h;}
+    b.pos.x+=b.vel.x*h;b.pos.y+=b.vel.y*h;
+    for(const t of g.trees)if(tree(b,t,g.ballR,g.rest))ev.bounced=true;
+    if(dst(b.pos,g.pin)<g.cupR&&spd(b)<g.capture){b.pos={...g.pin};b.vel={x:0,y:0};b.moving=false;b.sunk=true;ev.sank=true;return ev;}
+  }
+  const t=terrainAt(b.pos,g);
+  if(t.k==="water"||t.k==="ob"){if(g.waterproof&&t.k==="water"){}else{b.pos={...b.rest};b.vel={x:0,y:0};b.moving=false;ev.water=true;return ev;}}
+  let base=(t.k==="water"?F_FAIR:t.f);
+  const fr=(t.k==="fair"||t.k==="rough"||t.k==="green")?1-(1-base)/g.rollF:base;
+  const decay=Math.pow(fr,dt*60);b.vel.x*=decay;b.vel.y*=decay;
+  if(spd(b)<STOP*g.W){b.vel={x:0,y:0};b.moving=false;b.rest={...b.pos};}
+  return ev;}
+function maxShot(fld,pm){return MAXF*fld.w*(pm||1);}
+function predict(g,start,vel,maxT){const gh={pos:{...start},vel:{...vel},rest:{...start},moving:true,sunk:false};
+  const pts=[{...gh.pos}],dt=1/60,steps=Math.floor((maxT||1.6)/dt);let sinks=false;
+  for(let i=0;i<steps;i++){const e=step(gh,dt,g);pts.push({...gh.pos});if(e.sank){sinks=true;break;}if(e.water||!gh.moving)break;}
+  return{pts,sinks};}
+
+/* ===================== GAME / CAMERA ===================== */
+const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
+let field={w:300,h:500},geom=null,ball=null,mode="round",dpr=1,cam={z:1,fx:150,fy:250};
+let trail=[],parts=[],pulse=null,aim=null,pBucket=0;
+let holeIndex=0,strokes=0,results=[],completing=false;
+let curBall=BALLS[0],curUp=NOUP,curHole=LEVELS[0];
+function resize(){const st=document.getElementById("stage");const w=st.clientWidth,h=st.clientHeight;
+  dpr=Math.min(2,window.devicePixelRatio||1);cv.width=w*dpr;cv.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+  const relX=ball&&geom?ball.pos.x/geom.W:0,relY=ball&&geom?ball.pos.y/geom.worldH:0;
+  field={w,h};
+  if(curHole){geom=buildGeom(curHole,field,curBall,curUp);if(ball){ball.pos={x:relX*geom.W,y:relY*geom.worldH};ball.rest={...ball.pos};}cam=camTarget();}
+  if(typeof initWFX==="function")initWFX();}
+window.addEventListener("resize",resize);
+function setHole(idx){holeIndex=idx;curHole=LEVELS[idx];
+  curBall=mode==="daily"?BALLS[0]:getBall(S.equipped);curUp=mode==="daily"?NOUP:upgrades();
+  geom=buildGeom(curHole,field,curBall,curUp);ball=spawn(geom);
+  trail=[];parts=[];pulse=null;aim=null;completing=false;strokes=0;cam=camTarget();updateHUD();}
+function onGreen(p){return geom&&dst(p,geom.pin)<geom.green.r*1.15;}
+function clampCam(c){const W=field.w,H=field.h,hw=W/(2*c.z),hh=H/(2*c.z);
+  c.fx=cl(c.fx,hw,Math.max(hw,W-hw));c.fy=cl(c.fy,hh,Math.max(hh,geom.worldH-hh));return c;}
+function camTarget(){if(!geom)return{z:1,fx:field.w/2,fy:field.h/2};
+  const W=field.w,H=field.h;
+  if(ball&&onGreen(ball.pos)){ // putting: zoom in on the green
+    const z=cl((H*0.66)/(geom.green.r*2.2),1.5,3);
+    return clampCam({z,fx:(ball.pos.x+geom.pin.x)/2,fy:(ball.pos.y+geom.pin.y)/2});
+  }
+  return clampCam({z:1,fx:W/2,fy:(ball?ball.pos.y:H/2)-0.12*H});}
+function burst(at,cols,n,spread){for(let i=0;i<n;i++){const a=Math.random()*6.28,s=spread*(.4+Math.random()*.6);
+  parts.push({x:at.x,y:at.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:0,max:.45+Math.random()*.35,size:geom.ballR*(.3+Math.random()*.5),color:cols[(Math.random()*cols.length)|0]});}}
+let last=null;
+function loop(t){if(last==null)last=t;let dt=(t-last)/1000;last=t;dt=Math.min(dt,1/30);
+  if(ball&&ball.moving&&!ball.sunk){const e=step(ball,dt,geom);
+    trail.push({x:ball.pos.x,y:ball.pos.y});if(trail.length>16)trail.shift();
+    if(e.bounced){SFX.bounce();vibe(8);}
+    if(e.water){strokes++;updateHUD();SFX.splash();vibe([0,40,30,40]);burst(ball.pos,["#8fd3ff","#cfefff","#fff"],14,geom.W*1.4);trail=[];}
+    if(e.sank&&!completing){completing=true;SFX.sink();vibe(60);burst(geom.pin,["#fff","#ffe08a","#7CFC7C"],22,geom.W*1.6);pulse={t:0};trail=[];
+      const s=strokes;setTimeout(()=>onHoleDone(s),640);}}
+  else if(trail.length)trail.shift();
+  for(const p of parts){p.life+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.9;p.vy*=.9;}
+  parts=parts.filter(p=>p.life<p.max);
+  if(pulse){pulse.t+=dt;if(pulse.t>.6)pulse=null;}
+  // camera easing (zoom + focus)
+  const ct=camTarget();const kz=Math.min(1,dt*5),kf=Math.min(1,dt*8);
+  cam.z+=(ct.z-cam.z)*kz;cam.fx+=(ct.fx-cam.fx)*kf;cam.fy+=(ct.fy-cam.fy)*kf;
+  if(screen==="play")document.getElementById("hint").textContent=
+    (ball&&onGreen(ball.pos))?"On the green — gentle taps roll it in 🏌️":"Drag back from the ball to aim & set power, then release.";
+  updateWFX(dt);draw();requestAnimationFrame(loop);}
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function draw(){if(!geom)return;const W=geom.W,H=field.h,wt=WEATHER[wKind];
+  ctx.fillStyle=wt.rough;ctx.fillRect(0,0,W,H);
+  ctx.save();ctx.translate(field.w/2,field.h/2);ctx.scale(cam.z,cam.z);ctx.translate(-cam.fx,-cam.fy);
+  // fairway corridor
+  ctx.strokeStyle=wt.fair;ctx.lineJoin="round";ctx.lineCap="round";ctx.lineWidth=geom.fairHalf*2;
+  ctx.beginPath();geom.path.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();
+  ctx.strokeStyle=wt.fringe;ctx.lineWidth=geom.fairHalf*2*.55;
+  ctx.beginPath();geom.path.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();
+  // tee box
+  const tee=geom.tee;ctx.fillStyle=wt.tee;rr(tee.x-geom.ppy*4,tee.y-geom.ppy*3,geom.ppy*8,geom.ppy*6,4);ctx.fill();
+  // green + fringe
+  ctx.fillStyle=wt.fringe;ctx.beginPath();ctx.arc(geom.green.x,geom.green.y,geom.green.r+geom.ppy*2.4,0,7);ctx.fill();
+  ctx.fillStyle=wt.grn;ctx.beginPath();ctx.arc(geom.green.x,geom.green.y,geom.green.r,0,7);ctx.fill();
+  // water
+  for(const w of geom.water){ctx.fillStyle=wt.water;rr(w.x,w.y,w.w,w.h,10);ctx.fill();
+    ctx.strokeStyle="rgba(0,0,0,.15)";ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle="rgba(255,255,255,.18)";rr(w.x+w.w*.12,w.y+w.h*.16,w.w*.4,w.h*.2,6);ctx.fill();}
+  // bunkers
+  for(const b of geom.bunkers){ctx.fillStyle=wt.sand;ctx.beginPath();ctx.ellipse(b.x,b.y,b.r,b.r*.82,0,0,7);ctx.fill();
+    ctx.strokeStyle="rgba(0,0,0,.12)";ctx.lineWidth=1.5;ctx.stroke();}
+  // prediction
+  const pr=aimPred();
+  if(pr){const smp=samplePath(pr.pts,18);smp.forEach((p,i)=>{const t=i/Math.max(1,smp.length-1);const sz=geom.ballR*(.42-t*.22);
+    ctx.globalAlpha=.85-t*.5;ctx.fillStyle=pr.sinks?"#7CFC7C":powerColor(pr.power);ctx.beginPath();ctx.arc(p.x,p.y,sz,0,7);ctx.fill();});ctx.globalAlpha=1;}
+  // cup + flag
+  ctx.fillStyle="#10321d";ctx.beginPath();ctx.arc(geom.pin.x,geom.pin.y,geom.cupR,0,7);ctx.fill();
+  ctx.strokeStyle="#eee";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(geom.pin.x,geom.pin.y);ctx.lineTo(geom.pin.x,geom.pin.y-geom.ppy*10);ctx.stroke();
+  ctx.fillStyle="#e23b3b";ctx.beginPath();ctx.moveTo(geom.pin.x,geom.pin.y-geom.ppy*10);ctx.lineTo(geom.pin.x+geom.ppy*5,geom.pin.y-geom.ppy*8.5);ctx.lineTo(geom.pin.x,geom.pin.y-geom.ppy*7);ctx.fill();
+  // pulse
+  if(pulse){const t=pulse.t/.6,r=geom.cupR+t*geom.cupR*5;ctx.globalAlpha=.8*(1-t);ctx.strokeStyle="#fff";ctx.lineWidth=3;ctx.beginPath();ctx.arc(geom.pin.x,geom.pin.y,r,0,7);ctx.stroke();ctx.globalAlpha=1;}
+  // trees
+  for(const t of geom.trees){ctx.fillStyle="rgba(0,0,0,.18)";ctx.beginPath();ctx.ellipse(t.x+t.r*.18,t.y+t.r*.28,t.r*.9,t.r*.5,0,0,7);ctx.fill();
+    ctx.fillStyle=wt.tree;ctx.beginPath();ctx.arc(t.x,t.y,t.r,0,7);ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,.10)";ctx.beginPath();ctx.arc(t.x-t.r*.3,t.y-t.r*.3,t.r*.5,0,7);ctx.fill();}
+  // trail
+  trail.forEach((p,i)=>{const t=i/Math.max(1,trail.length);const sz=geom.ballR*(.28+t*.5);ctx.globalAlpha=.05+t*.28;ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(p.x,p.y,sz,0,7);ctx.fill();});ctx.globalAlpha=1;
+  // power ring
+  if(pr&&ball&&!ball.moving&&!ball.sunk){const rg=geom.ballR*(1.4+pr.power);ctx.strokeStyle=powerColor(pr.power);ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(ball.pos.x,ball.pos.y,rg,0,7);ctx.stroke();}
+  // ball
+  if(ball&&!ball.sunk){ctx.save();ctx.shadowColor="rgba(0,0,0,.35)";ctx.shadowBlur=4;ctx.shadowOffsetY=2;
+    ctx.fillStyle=curBall.body;ctx.beginPath();ctx.arc(ball.pos.x,ball.pos.y,geom.ballR,0,7);ctx.fill();ctx.restore();
+    ctx.strokeStyle=curBall.accent;ctx.lineWidth=1;ctx.beginPath();ctx.arc(ball.pos.x,ball.pos.y,geom.ballR,0,7);ctx.stroke();
+    ctx.fillStyle="rgba(255,255,255,.85)";ctx.beginPath();ctx.arc(ball.pos.x-geom.ballR*.3,ball.pos.y-geom.ballR*.35,geom.ballR*.32,0,7);ctx.fill();}
+  // particles
+  parts.forEach(p=>{ctx.globalAlpha=1-p.life/p.max;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,7);ctx.fill();});ctx.globalAlpha=1;
+  ctx.restore();
+  drawWeather(W,H);
+  drawMiniMap(W,H);
+}
+function drawMiniMap(W,H){ // small progress bar of the hole on the right edge
+  if(!geom)return;const x=W-10,y0=14,y1=H-14,len=y1-y0;
+  ctx.strokeStyle="rgba(255,255,255,.25)";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x,y0);ctx.lineTo(x,y1);ctx.stroke();
+  ctx.fillStyle="#e23b3b";ctx.beginPath();ctx.arc(x,y0,4,0,7);ctx.fill(); // green at top
+  const bp=ball?1-cl(ball.pos.y/geom.worldH,0,1):0; // 0 tee..1 green
+  ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(x,y1-bp*len,4,0,7);ctx.fill();
+}
+function powerColor(p){return p<.45?"#eafff0":p<.75?"#ffe08a":"#ff8f5e";}
+function samplePath(pts,n){if(pts.length<=n)return pts;const out=[],st=pts.length/n;for(let i=0;i<n;i++)out.push(pts[(i*st)|0]);return out;}
+function aimPred(){if(!aim||!ball||ball.moving||ball.sunk)return null;
+  const len=Math.hypot(aim.dx,aim.dy),maxDrag=.42*field.w,power=cl(len/maxDrag,0,1);if(power<.05)return null;
+  const pf=onGreen(ball.pos)?0.34:1;
+  const dx=-aim.dx/(len||1),dy=-aim.dy/(len||1),sp=power*maxShot(field,curBall.power*curUp.power)*pf;
+  return{...predict(geom,ball.pos,{x:dx*sp,y:dy*sp},1.7*curUp.aim),power};}
+
+/* input */
+let dragging=false,startPt={x:0,y:0};
+function localPt(ev){const r=cv.getBoundingClientRect();const t=ev.touches?ev.touches[0]:ev;return{x:t.clientX-r.left,y:t.clientY-r.top};}
+function canPlay(){return screen==="play"&&ball&&!ball.moving&&!ball.sunk&&!completing;}
+function down(ev){if(!canPlay())return;ev.preventDefault();ac();dragging=true;aim={dx:0,dy:0};startPt=localPt(ev);pBucket=0;}
+function move(ev){if(!dragging||!canPlay())return;ev.preventDefault();const p=localPt(ev);aim={dx:p.x-startPt.x,dy:p.y-startPt.y};
+  const power=cl(Math.hypot(aim.dx,aim.dy)/(.42*field.w),0,1),bk=(power*4)|0;if(bk!==pBucket){pBucket=bk;vibe(5);}}
+function up(){if(!dragging)return;dragging=false;const a=aim;aim=null;if(!canPlay()||!a)return;
+  const len=Math.hypot(a.dx,a.dy),power=cl(len/(.42*field.w),0,1);if(power<.05)return;
+  const pf=onGreen(ball.pos)?0.34:1;
+  const dx=-a.dx/(len||1),dy=-a.dy/(len||1),sp=power*maxShot(field,curBall.power*curUp.power)*pf;
+  ball.vel={x:dx*sp,y:dy*sp};ball.moving=true;trail=[];strokes++;updateHUD();SFX.putt(power);vibe(power>.6?25:12);}
+cv.addEventListener("mousedown",down);cv.addEventListener("mousemove",move);window.addEventListener("mouseup",up);
+cv.addEventListener("touchstart",down,{passive:false});cv.addEventListener("touchmove",move,{passive:false});window.addEventListener("touchend",up);
+
+/* ===================== FLOW ===================== */
+let screen="title";
+function show(name){screen=name;
+  ["scTitle","scHole","scRound","scDaily","scShop","scBoard","scName"].forEach(id=>document.getElementById(id).classList.add("hidden"));
+  if(name==="title")document.getElementById("scTitle").classList.remove("hidden");
+  if(name==="shop"){buildShop();document.getElementById("scShop").classList.remove("hidden");}
+  if(name==="board"){buildBoard();document.getElementById("scBoard").classList.remove("hidden");}
+  document.getElementById("hint").style.visibility=(name==="play")?"visible":"hidden";}
+function scrim(id,on){document.getElementById(id).classList.toggle("hidden",!on);}
+function startRound(){mode="round";results=[];setHole(0);show("play");}
+function startDaily(){mode="daily";const c=dailyChallenge();results=[];setHole(c.holeIndex);show("play");}
+function nextHole(){scrim("scHole",false);setHole(holeIndex+1);show("play");}
+function onHoleDone(s){const L=curHole;
+  if(mode==="daily"){const key=todayKey(),rec=recordDaily(S.daily,key,s);S.daily=rec.state;
+    const coins=coinsDaily(s,L.par,S.daily.streak,rec.firstToday);S.coins+=coins;SFX.coin();
+    addBoard("daily",{name:S.name,score:s,par:L.par,date:key});save();
+    document.getElementById("dcTerm").textContent=term({strokes:s,par:L.par});
+    document.getElementById("dcStrokes").textContent=s+(s===1?" stroke":" strokes");
+    document.getElementById("dcCoins").textContent="+"+coins+" 🪙";
+    document.getElementById("dcSub").textContent=L.name+" · Par "+L.par+" · "+L.yards+"y"+(rec.improved?" · improved!":"");
+    document.getElementById("dcStreak").textContent="🔥 "+S.daily.streak;updateHUD();scrim("scDaily",true);screen="dailyDone";return;}
+  results.push({name:L.name,par:L.par,strokes:s});const coins=coinsHole(s,L.par);S.coins+=coins;SFX.coin();
+  if(holeIndex+1>=LEVELS.length){const total=results.reduce((a,r)=>a+r.strokes,0),rec=(S.best==null||total<S.best);if(rec)S.best=total;
+    const roundCoins=coins+50+(rec?150:0);S.coins+=50+(rec?150:0);
+    addBoard("round",{name:S.name,score:total,par:TOTAL_PAR,date:todayKey()});save();SFX.cheer();
+    document.getElementById("rcRecord").classList.toggle("hidden",!rec);
+    document.getElementById("rcCoins").textContent="+"+roundCoins+" 🪙 earned";
+    document.getElementById("rcCard").innerHTML=scorecard(results);updateHUD();scrim("scRound",true);screen="roundDone";}
+  else{save();document.getElementById("hcTerm").textContent=term({strokes:s,par:L.par});
+    document.getElementById("hcStrokes").textContent=s+(s===1?" stroke":" strokes");
+    document.getElementById("hcCoins").textContent="+"+coins+" 🪙";
+    const toPar=results.reduce((a,r)=>a+(r.strokes-r.par),0);
+    document.getElementById("hcSub").textContent="Par "+L.par+" · "+L.yards+"y · Round "+fmtPar(toPar);
+    updateHUD();scrim("scHole",true);screen="holeDone";}}
+function coinsHole(s,par){if(s===1)return 100;const d=s-par;return d<=-3?80:d===-2?60:d===-1?40:d===0?20:d===1?10:5;}
+function term(r){if(r.strokes===1)return"Hole in One! ⛳";const d=r.strokes-r.par;
+  return d<=-3?"Albatross!":d===-2?"Eagle!":d===-1?"Birdie!":d===0?"Par":d===1?"Bogey":d===2?"Double Bogey":"+"+d;}
+function fmtPar(d){return d===0?"E":d>0?"+"+d:""+d;}
+function scorecard(rs){const tp=rs.reduce((a,r)=>a+r.par,0),ts=rs.reduce((a,r)=>a+r.strokes,0),tt=ts-tp;
+  let h='<div class="row h"><div class="c1">Hole</div><div class="cn">Par</div><div class="cn">You</div><div class="cn">+/-</div></div><div style="max-height:200px;overflow:auto">';
+  rs.forEach(r=>{const d=r.strokes-r.par,c=d<0?"var(--bad)":d>0?"var(--muted)":"var(--good)";
+    h+=`<div class="row"><div class="c1">${r.name}</div><div class="cn">${r.par}</div><div class="cn">${r.strokes}</div><div class="cn" style="color:${c};font-weight:800">${fmtPar(d)}</div></div>`;});
+  h+=`</div><div class="row t"><div class="c1">TOTAL</div><div class="cn">${tp}</div><div class="cn">${ts}</div><div class="cn" style="color:${tt<0?'var(--bad)':tt>0?'var(--muted)':'var(--good)'}">${fmtPar(tt)}</div></div>`;return h;}
+
+/* daily */
+function h32(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function mul(seed){let a=seed>>>0;return()=>{a|=0;a=(a+0x6d2b79f5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};}
+const TWISTS=["Precision Round","Pressure Putt","Long Drive Day","Fairway Focus","Cup Hunter","Sunday Pin"];
+function pad(n){return n<10?"0"+n:""+n;}
+function keyOf(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+function todayKey(){return keyOf(new Date());}
+function yKey(k){const[y,m,d]=k.split("-").map(Number);const dt=new Date(y,m-1,d);dt.setDate(dt.getDate()-1);return keyOf(dt);}
+function dailyChallenge(k){k=k||todayKey();const r=mul(h32(k));const hi=(r()*LEVELS.length)|0;return{dateKey:k,holeIndex:hi,par:LEVELS[hi].par,twist:TWISTS[(r()*TWISTS.length)|0]};}
+function recordDaily(prev,k,s){const pb=prev.best[k],was=pb!==undefined;const best={...prev.best,[k]:was?Math.min(pb,s):s};
+  let streak=prev.streak,last=prev.last;const first=!was;if(first){streak=prev.last===yKey(k)?prev.streak+1:1;last=k;}
+  return{state:{streak,last,best},firstToday:first,improved:was&&s<pb};}
+function coinsDaily(s,par,streak,first){const d=s-par;let b=s===1?150:d<=-2?90:d===-1?60:d===0?40:d===1?20:10;return b+(first?Math.min(streak,10)*15:0);}
+
+/* leaderboard */
+const SEED_ROUND=[{name:"Birdie Bot",score:TOTAL_PAR-8,par:TOTAL_PAR,cpu:true},{name:"Eagle Eddie",score:TOTAL_PAR-4,par:TOTAL_PAR,cpu:true},
+  {name:"Par Patty",score:TOTAL_PAR,par:TOTAL_PAR,cpu:true},{name:"Bogey Bill",score:TOTAL_PAR+7,par:TOTAL_PAR,cpu:true}];
+function addBoard(kind,e){const l=S.board[kind];l.push(e);l.sort((a,b)=>a.score-b.score);S.board[kind]=l.slice(0,25);}
+let boardTab="round";
+function buildBoard(){renderBoardTab(boardTab);}
+function renderBoardTab(tab){boardTab=tab;document.getElementById("tabRound").classList.toggle("on",tab==="round");document.getElementById("tabDaily").classList.toggle("on",tab==="daily");
+  const body=document.getElementById("boardBody");
+  if(tab==="round"){const rows=SEED_ROUND.concat(S.board.round.map(e=>({...e}))).sort((a,b)=>a.score-b.score).slice(0,20);
+    let h='<div class="row h"><div class="rk">#</div><div class="c1">Player</div><div class="cn">Score</div><div class="cn">+/-</div></div>';
+    rows.forEach((r,i)=>{const d=r.score-r.par,me=!r.cpu&&r.name===S.name;
+      h+=`<div class="row ${me?'me':''}"><div class="rk">${medal(i)}</div><div class="c1">${esc(r.name)}${r.cpu?' <span class="tagm">CPU</span>':''}</div><div class="cn">${r.score}</div><div class="cn">${fmtPar(d)}</div></div>`;});
+    if(!S.board.round.length)h+='<div class="secsub" style="margin-top:12px">Finish a round to post your score — beat the CPU pace-setters!</div>';body.innerHTML=h;}
+  else{const c=dailyChallenge();const at=Object.entries(S.daily.best).sort((a,b)=>b[0]<a[0]?-1:1);
+    let h=`<div class="todaybox"><div class="streak">🔥 ${S.daily.streak}</div><div class="streaklbl">day streak</div>
+      <div style="margin-top:10px;font-weight:700">Today · ${c.twist}</div>
+      <div class="secsub" style="margin:4px 0 0">${LEVELS[c.holeIndex].name} · Par ${c.par} · ${LEVELS[c.holeIndex].yards}y${S.daily.best[c.dateKey]!==undefined?` · best ${S.daily.best[c.dateKey]}`:" · not played yet"}</div></div><div class="sec">History</div>`;
+    if(!at.length)h+='<div class="secsub">No daily runs yet. Play today\'s challenge!</div>';
+    else{h+='<div class="row h"><div class="c1">Date</div><div class="cn">Score</div></div>';at.forEach(([d,s])=>{h+=`<div class="row"><div class="c1">${d}</div><div class="cn">${s}</div></div>`;});}
+    body.innerHTML=h;}}
+function medal(i){return i===0?"🥇":i===1?"🥈":i===2?"🥉":(i+1);}
+function esc(s){return String(s).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));}
+
+/* shop */
+function purchase(){return new Promise(r=>setTimeout(()=>r(true),400));}
+function buildShop(){document.getElementById("shopCoins").textContent="🪙 "+S.coins;
+  const bl=document.getElementById("ballList");bl.innerHTML="";
+  BALLS.forEach(b=>{const owned=S.owned.includes(b.id),eq=S.equipped===b.id;const el=document.createElement("div");el.className="item"+(eq?" eq":"");
+    el.innerHTML=`<div class="top"><div class="ball" style="background:radial-gradient(circle at 32% 28%, #fff6, ${b.body});"><div class="shine"></div></div>
+      <div class="info"><div class="nm">${b.name}${b.waterproof?' <span class="tagm">💧 Waterproof</span>':''}</div><div class="bl">${b.blurb}</div></div></div>
+      <div class="stats">${statBar("Power",b.power,.8,1.5)}${statBar("Roll",b.roll,.6,1.4)}${statBar("Bounce",b.bounce,.4,1.5)}${statBar("Magnet",b.magnet,.8,2.2)}</div>
+      <div class="act"><div class="eff"></div>${ballBtn(b,owned,eq)}</div>`;bl.appendChild(el);
+    const btn=el.querySelector("button");if(btn)btn.onclick=()=>ballAction(b,owned,eq);});
+  const clg=document.getElementById("clubList");clg.innerHTML="";
+  CLUBS.forEach(c=>{const lv=clubLv(c.id),maxed=lv>=c.max,cost=maxed?null:c.costs[lv];const el=document.createElement("div");el.className="item";
+    let pips="";for(let i=0;i<c.max;i++)pips+=`<div class="pip ${i<lv?'on':''}"></div>`;const pct=n=>Math.round(n*c.per*100);
+    el.innerHTML=`<div class="top"><div class="clubico">${c.emoji}</div><div class="info"><div class="nm">${c.name} <span class="lv">Lv ${lv}/${c.max}</span></div><div class="bl">${c.blurb}</div></div></div>
+      <div class="pips">${pips}</div><div class="act"><div class="eff">${maxed?`${c.stat} +${pct(lv)}% · Maxed`:`Now +${pct(lv)}% → Next +${pct(lv+1)}% ${c.stat}`}</div>
+      ${maxed?'<div class="abtn max">MAX</div>':`<button class="abtn buy">🪙 ${cost}</button>`}</div>`;clg.appendChild(el);
+    const btn=el.querySelector("button");if(btn)btn.onclick=()=>upgradeClub(c);});
+  const cp=document.getElementById("coinPacks");cp.innerHTML="";
+  COIN_PACKS.forEach(p=>{const el=document.createElement("div");el.className="coinpack";el.innerHTML=`<b>🪙 ${p.coins}</b><span class="pr">${p.price}</span>`;
+    el.onclick=async()=>{el.style.opacity=.5;await purchase();S.coins+=p.coins;SFX.coin();save();toast("+"+p.coins+" coins (demo)");buildShop();updateHUD();};cp.appendChild(el);});}
+function statBar(l,v,lo,hi){const f=Math.max(.05,Math.min(1,(v-lo)/(hi-lo))),col=v>=1.15?"var(--green)":v<.9?"#d98a3f":"#7bbf94";
+  return `<div class="stat"><span>${l}</span><div class="track"><div class="fill" style="width:${f*100}%;background:${col}"></div></div></div>`;}
+function ballBtn(b,owned,eq){if(eq)return'<div class="abtn eqd">✓ Equipped</div>';if(owned)return'<button class="abtn equip">Equip</button>';
+  return b.unlock.t==="coins"?`<button class="abtn buy">🪙 ${b.unlock.amt}</button>`:`<button class="abtn buy">Buy ${b.unlock.price}</button>`;}
+async function ballAction(b,owned,eq){if(eq)return;
+  if(owned){S.equipped=b.id;save();SFX.coin();buildShop();updateHUD();return;}
+  if(b.unlock.t==="coins"){if(S.coins<b.unlock.amt){toast("Need "+(b.unlock.amt-S.coins)+" more coins");return;}
+    S.coins-=b.unlock.amt;S.owned.push(b.id);S.equipped=b.id;save();SFX.coin();buildShop();updateHUD();}
+  else{toast("Purchasing… (demo)");if(await purchase()){S.owned.push(b.id);S.equipped=b.id;save();SFX.cheer();buildShop();updateHUD();toast(b.name+" unlocked!");}}}
+function upgradeClub(c){const lv=clubLv(c.id);if(lv>=c.max)return;const cost=c.costs[lv];if(S.coins<cost){toast("Need "+(cost-S.coins)+" more coins");return;}
+  S.coins-=cost;S.clubs[c.id]=lv+1;save();SFX.coin();buildShop();updateHUD();toast(c.name+" → Lv "+(lv+1));}
+
+/* HUD */
+function updateHUD(){document.getElementById("hHole").textContent=curHole?curHole.name:"ZappyGolf";
+  let sub;
+  if(mode==="daily")sub="Daily · Par "+(curHole?curHole.par:"-")+" · "+(curHole?curHole.yards:"")+"y";
+  else sub="Hole "+(holeIndex+1)+"/18 · Par "+(curHole?curHole.par:"-")+" · "+(curHole?curHole.yards:"")+"y";
+  document.getElementById("hSub").textContent=sub;
+  document.getElementById("hStrokes").textContent=strokes;
+  let ptxt="strokes";
+  if(ball&&geom&&screen==="play"){const yd=Math.round(dst(ball.pos,geom.pin)/geom.ppy);ptxt=yd+"y to pin";}
+  else if(mode!=="daily"){ptxt="strokes · "+fmtPar(results.reduce((a,r)=>a+(r.strokes-r.par),0));}
+  document.getElementById("hPar").textContent=ptxt;
+  document.getElementById("hCoins").textContent="🪙 "+S.coins;
+  document.getElementById("titleBest").textContent=S.best!=null?("🏆 Course record: "+S.best+" ("+fmtPar(S.best-TOTAL_PAR)+")"):"";}
+let toastT=null;
+function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),1600);}
+
+/* bind */
+document.getElementById("bStart").onclick=startRound;
+document.getElementById("bAgain").onclick=()=>{scrim("scRound",false);startRound();};
+document.getElementById("bNext").onclick=nextHole;
+document.getElementById("bDaily").onclick=startDaily;
+document.getElementById("bDailyDone").onclick=()=>{scrim("scDaily",false);show("title");updateHUD();};
+document.getElementById("bShop2").onclick=()=>{prevScreen="title";show("shop");};
+document.getElementById("bShopMid").onclick=()=>{scrim("scHole",false);prevScreen="holeDone";show("shop");};
+document.getElementById("bShopX").onclick=()=>backFromMenu();
+document.getElementById("bBoard2").onclick=()=>{prevScreen="title";show("board");};
+document.getElementById("bBoardEnd").onclick=()=>{scrim("scRound",false);prevScreen="title";show("board");};
+document.getElementById("bBoardDaily").onclick=()=>{scrim("scDaily",false);prevScreen="title";show("board");};
+document.getElementById("bBoardX").onclick=()=>backFromMenu();
+document.getElementById("hCoins").onclick=()=>{if(screen!=="shop"){prevScreen=screen;show("shop");}};
+document.getElementById("tabRound").onclick=()=>renderBoardTab("round");
+document.getElementById("tabDaily").onclick=()=>renderBoardTab("daily");
+document.getElementById("bNameEdit").onclick=()=>{document.getElementById("nameInput").value=S.name;scrim("scName",true);};
+document.getElementById("bNameSave").onclick=()=>{S.name=(document.getElementById("nameInput").value.trim().slice(0,14)||"Player");save();scrim("scName",false);buildBoard();};
+document.getElementById("hSound").onclick=()=>{S.muted=!S.muted;save();document.getElementById("hSound").textContent=S.muted?"🔇":"🔊";if(!S.muted)ac();};
+function setWeather(w){S.weather=w;save();initWFX();setWeatherUI();}
+document.querySelectorAll(".wchip").forEach(c=>c.onclick=()=>setWeather(c.dataset.w));
+document.getElementById("hWeather").onclick=()=>{const o=["auto","sun","cloud","rain","snow","fog"];setWeather(o[(o.indexOf(S.weather)+1)%o.length]);toast("Weather: "+(S.weather==="auto"?"Auto":WEATHER[S.weather].label));};
+let prevScreen="title";
+function backFromMenu(){if(prevScreen==="holeDone"){show("play");scrim("scHole",true);}else if(prevScreen==="play"){show("play");}else show("title");updateHUD();}
+
+/* init */
+function init(){document.getElementById("hSound").textContent=S.muted?"🔇":"🔊";resize();
+  mode="round";curHole=LEVELS[0];curBall=getBall(S.equipped);curUp=upgrades();geom=buildGeom(curHole,field,curBall,curUp);ball=spawn(geom);cam=camTarget();
+  initWFX();setWeatherUI();updateHUD();show("title");requestAnimationFrame(loop);setTimeout(()=>{resize();cam=camTarget();},60);}
+init();
+</script>
