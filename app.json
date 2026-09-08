@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "ZappyGolf",
+    "slug": "zappygolf",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#0b6e3b",
+    "splash": {
+      "backgroundColor": "#0b6e3b",
+      "resizeMode": "contain"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.zappygolf.app"
+    },
+    "android": {
+      "package": "com.zappygolf.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0b6e3b"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
